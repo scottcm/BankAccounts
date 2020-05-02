@@ -3,47 +3,30 @@
 #define BANK_ACCOUNT_H
 
 // Includes
-#include <objbase.h>
 #include <string>
-#include <sstream>
-
-// Generate GUID requires OLE32
-#pragma comment(lib, "ole32.lib")
 
 using namespace std;
+
+enum class AccountType : int { Invalid = 0, Savings = 100, Checkings = 200 };
 
 
 class BankAccount
 {
 private:
-	GUID _accountId;					// account ID. Must be unique
+	AccountType _accountType;			// The type of account
+	double _annualInterestRate;			// annual interest rate of the account
+	short _suffix;						// account suffix	
+	string _description;				// Account description
+
+protected:
+	
 	double _balance;					// account balance
 	double _monthInterestEarned;		// amount of interest earned this month
 	double _ytdInterestEarned;			// year-to-date interest earned
 	double _serviceCharges;				// amount of service charges in dollars
-	double _annualInterestRate;			// annual interest rate of the account
 	int _numMonthDeposits;				// number of deposits for the month
 	int _numMonthWithdrawals;			// number of withdrawals for the month
-	
-	
-	// Private constructor - This code should never be modified by children
-	BankAccount()
-	{
-		_balance = 0;
-		_annualInterestRate = 0;
-		_serviceCharges = 0;
-		_numMonthDeposits = 0;
-		_numMonthWithdrawals = 0;
-		_monthInterestEarned = 0;
-		_ytdInterestEarned = 0;
 
-		// Assign account ID
-		::CoInitialize(0);	// Initialize COM - Windows
-		::CoCreateGuid(&_accountId);	// Assign a random GUID to _accountId
-		::CoUninitialize();	// Unitialize COM
-	}
-
-protected:
 	void resetMonthlyCounters()
 	{
 		_serviceCharges = 0;
@@ -63,13 +46,56 @@ protected:
 	}
 
 public:
-	// Constructor
-	BankAccount(double balance, double interestRate) : BankAccount()
+	BankAccount()
 	{
-		// Initialize balance and interest rate variables
+		_balance = 0;
+		_annualInterestRate = 0;
+		_accountType = AccountType::Invalid;
+		_suffix = 0;
+
+		_serviceCharges = 0;
+		_numMonthDeposits = 0;
+		_numMonthWithdrawals = 0;
+		_monthInterestEarned = 0;
+		_ytdInterestEarned = 0;
+		_description = "";
+	}
+
+	// Constructor
+	BankAccount(double balance, double annualInterestRate, AccountType accountType, int accountOffset) : BankAccount()
+	{
+		_balance = balance;
+		_annualInterestRate = annualInterestRate;
+		_accountType = accountType;
+		_suffix = static_cast<int>(_accountType) + accountOffset;
 	}
 
 	// Accessors and Settors
+	const AccountType getAccountType() const
+	{
+		return _accountType;
+	}
+
+	const int getAccountSuffix() const
+	{
+		return _suffix;
+	}
+
+	const int getAccountOffset() const
+	{
+		return getAccountSuffix() - static_cast<int>(getAccountType());
+	}
+
+	const string getDescription() const
+	{
+		return _description;
+	}
+
+	void setDescription(string description)
+	{
+		_description = description;
+	}
+
 	const double getBalance() const
 	{
 		return _balance;
@@ -90,26 +116,46 @@ public:
 		return _annualInterestRate;
 	}
 
-	const int getNumWithdrawals()
+	const int getNumWithdrawals() const
 	{
 		return _numMonthWithdrawals;
 	}
 
-	const int getNumDeposits()
+	const int getNumDeposits() const
 	{
 		return _numMonthDeposits;
 	}
 
-	// Returns the AccountID as a string
-	const string getAccountId();
+	const string getAccountNumber(int customerId) const
+	{
+		return to_string(customerId) + ":" + to_string(_suffix);
+	}
 
-	const double deposit(const double* amount);
+	static AccountType identifyAccountType(int suffix)
+	{
+		AccountType accountType = AccountType::Invalid;
+		int rootSuffix = suffix - (suffix % 100);
+
+		switch (suffix)
+		{
+			case static_cast<int>(AccountType::Savings) :
+				accountType = AccountType::Savings;
+			break;
+			case static_cast<int>(AccountType::Checkings) :
+				accountType = AccountType::Checkings;
+			break;
+		}
+
+		return accountType;
+	}
+
+	virtual const double deposit(const double* amount);
 	
-	const double withdrawal(const double* amount);
+	virtual const double withdrawal(const double* amount);
 
-	void calcInt();
+	virtual void calcInt();
 
-	void monthlyProc();
+	virtual void monthlyProc();
 };
 
 #endif // !BANK_ACCOUNT_H

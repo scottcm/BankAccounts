@@ -1,39 +1,6 @@
 #pragma once
 #include "BankAccount.h"
 
-
-const string BankAccount::getAccountId()
-{
-	ostringstream oss;		// output stream used to create the string
-
-	// Found code to convert GUID to string
-	// https://stackoverflow.com/questions/1672677/print-a-guid-variable
-	oss << std::uppercase;
-	oss.width(8);
-	oss << std::hex << _accountId.Data1 << '-';
-
-	oss.width(4);
-	oss << std::hex << _accountId.Data2 << '-';
-
-	oss.width(4);
-	oss << std::hex << _accountId.Data3 << '-';
-
-	oss.width(2);
-	oss << std::hex
-		<< static_cast<short>(_accountId.Data4[0])
-		<< static_cast<short>(_accountId.Data4[1])
-		<< '-'
-		<< static_cast<short>(_accountId.Data4[2])
-		<< static_cast<short>(_accountId.Data4[3])
-		<< static_cast<short>(_accountId.Data4[4])
-		<< static_cast<short>(_accountId.Data4[5])
-		<< static_cast<short>(_accountId.Data4[6])
-		<< static_cast<short>(_accountId.Data4[7]);
-	oss << std::nouppercase;
-
-	return oss.str();
-}
-
 const double BankAccount::deposit(const double* amount)
 {
 	_balance += (*amount);
