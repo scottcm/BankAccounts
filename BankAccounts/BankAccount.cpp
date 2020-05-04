@@ -1,9 +1,9 @@
 #pragma once
 #include "BankAccount.h"
 
-const double BankAccount::deposit(const double* amount)
+const double BankAccount::deposit(const double amount)
 {
-	_balance += (*amount);
+	_balance += amount;
 	_numMonthDeposits++;
 
 	return _balance;
@@ -12,9 +12,9 @@ const double BankAccount::deposit(const double* amount)
 // Withdraw function must be implemented by child classes.
 	// Subtracts the amount from the balance
 	// - double amount: The amount to withdraw
-const double BankAccount::withdrawal(const double* amount)
+const double BankAccount::withdrawal(const double amount)
 {
-	_balance -= (*amount);
+	_balance -= amount;
 	_numMonthWithdrawals++;
 
 	return getBalance();

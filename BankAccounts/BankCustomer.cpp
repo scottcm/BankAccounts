@@ -7,11 +7,11 @@
 
 using namespace std;
 
-BankCustomer::BankCustomer(int customerId, string firstName, string lastName)
+BankCustomer::BankCustomer(int accountNum, string firstName, string lastName)
 {
 	_firstName = firstName;
 	_lastName = lastName;
-	_customerId = customerId;
+	_accountNum = accountNum;
 }
 
 BankCustomer::~BankCustomer()
@@ -37,17 +37,21 @@ BankAccount* BankCustomer::findAccount(int suffix)
 
 
 // Uses a linear search because it is more likely that the first of a type is at the beginning
-BankAccount* BankCustomer::findFirstAccountOfType(AccountType accountType, int startingOffset)
+BankAccount* BankCustomer::findNextAccountOfType(AccountType accountType, int startingOffset)
 {
 	BankAccount* account = nullptr;
-	int suffix = static_cast<int>(accountType);
 
-	for (int offset = startingOffset; offset < 100; offset++)
+	if (accountType != AccountType::Invalid)
 	{
-		if (BankCustomer::_accounts.count(suffix + offset) && BankCustomer::_accounts[suffix+offset]->getAccountType() == accountType)
+		int suffix = static_cast<int>(accountType);
+
+		for (int offset = startingOffset + 1; offset < 100; offset++)
 		{
-			account = BankCustomer::_accounts[suffix + offset];
-			break;
+			if (BankCustomer::_accounts.count(suffix + offset) && BankCustomer::_accounts[suffix + offset]->getAccountType() == accountType)
+			{
+				account = BankCustomer::_accounts[suffix + offset];
+				break;
+			}
 		}
 	}
 
@@ -73,7 +77,7 @@ const int BankCustomer::getNextSuffixOfType(AccountType accountType)
 	return 0;
 }
 
-int BankCustomer::createAccount(AccountType accountType, double startingBalance, double annualInterestRate)
+int BankCustomer::createSubAccount(AccountType accountType, double startingBalance, double annualInterestRate)
 {
 	int suffix = BankCustomer::getNextSuffixOfType(accountType);
 
@@ -95,7 +99,7 @@ int BankCustomer::createAccount(AccountType accountType, double startingBalance,
 	return suffix;
 }
 
-void BankCustomer::deleteAccount(int suffix)
+void BankCustomer::deleteSubAccount(int suffix)
 {
 	if (_accounts.count(suffix))
 	{
@@ -117,14 +121,14 @@ BankAccount* BankCustomer::getAccount(int suffix)
 	return account;
 }
 
-void BankCustomer::DisplayCustomerInfo()
+void BankCustomer::displayCustomerInfo()
 {
 	cout << "Cust Name: " << this->getFullName() << endl;
-	cout << "Account #: " << this->getCustomerId() << endl;
+	cout << "Account #: " << this->getAccountNum() << endl;
 	cout << "Num Accounts: " << this->getNumAccounts() << endl << endl;
 }
 
-void BankCustomer::DisplaySavingsAccounts()
+void BankCustomer::displaySavingsAccounts()
 {
 	SavingAccount* acct = this->getFirstSavingAccount();
 	cout << "Saving Accounts\n";
@@ -136,21 +140,12 @@ void BankCustomer::DisplaySavingsAccounts()
 	else
 	{
 		// Display table header
-		cout << setw(ACCOUNT_WIDTH) << left << "Account #" <<
-			setw(DESC_WIDTH) << left << "Description" <<
-			setw(BALANCE_WIDTH) << "Balance" <<
-			setw(7) << " APR" <<
-			"Status\n";
+		displayAccountHeader(AccountType::Savings);
 
-		cout << string(ACCOUNT_WIDTH + DESC_WIDTH + BALANCE_WIDTH + STATUS_WIDTH + APR_WIDTH, '-') << endl;
 		// Display data
 		do
 		{
-			cout << setw(ACCOUNT_WIDTH) << left << acct->getAccountNumber(this->getCustomerId());
-			cout << setw(DESC_WIDTH) << left << acct->getDescription();
-			cout << "$" << setw(BALANCE_WIDTH) << left << fixed << setprecision(2) << acct->getBalance();
-			cout << setw(APR_WIDTH) << left << fixed << setprecision(2) << acct->getAnnualInterestRate();
-			cout << setw(STATUS_WIDTH) << left << acct->getStatusCode() << endl;
+			displayAccountInfo(acct);
 
 			acct = this->getNextSavingAccount(acct->getAccountOffset());
 		} while (acct != nullptr);
@@ -159,9 +154,9 @@ void BankCustomer::DisplaySavingsAccounts()
 	cout << endl << endl;
 }
 
-void BankCustomer::DisplayCheckingsAccounts()
+void BankCustomer::displayCheckingsAccounts()
 {
-	CheckingAccount* acct = this->getFirstCheckingAccount();
+	CheckingAccount* acct = getFirstCheckingAccount();
 	
 	cout << "Checking Accounts\n";
 
@@ -172,23 +167,83 @@ void BankCustomer::DisplayCheckingsAccounts()
 	else
 	{
 		// Display table header
-		cout << setw(ACCOUNT_WIDTH) << left << "Account #" <<
-			setw(DESC_WIDTH) << left << "Description" <<
-			setw(BALANCE_WIDTH) << "Balance" <<
-			" APR\n";
-		cout << string(ACCOUNT_WIDTH + DESC_WIDTH + BALANCE_WIDTH + APR_WIDTH, '-') << endl;
+		displayAccountHeader(AccountType::Checkings);
 
 		// Display data
 		do
 		{
-			cout << setw(ACCOUNT_WIDTH) << left << acct->getAccountNumber(this->getCustomerId());
-			cout << setw(DESC_WIDTH) << left << acct->getDescription();
-			cout << "$" << setw(BALANCE_WIDTH) << left << fixed << setprecision(2) << acct->getBalance();
-			cout << left << fixed << setprecision(2) << acct->getAnnualInterestRate() << endl;
+			displayAccountInfo(acct);
 
 			acct = this->getNextCheckingAccount(acct->getAccountOffset());
 		} while (acct != nullptr);
 	}
 
 	cout << endl << endl;
+}
+
+void BankCustomer::displayAccountHeader(AccountType accountType)
+{
+	if (accountType == AccountType::Checkings)
+	{
+		cout << setw(ACCOUNT_WIDTH) << left << "Account #" <<
+			setw(DESC_WIDTH) << left << "Description" <<
+			setw(BALANCE_WIDTH) << "Balance" <<
+			" APR\n";
+		cout << string(ACCOUNT_WIDTH + DESC_WIDTH + BALANCE_WIDTH + APR_WIDTH, '-') << endl;
+	}
+	else if (accountType == AccountType::Savings)
+	{
+		cout << setw(ACCOUNT_WIDTH) << left << "Account #" <<
+			setw(DESC_WIDTH) << left << "Description" <<
+			setw(BALANCE_WIDTH) << "Balance" <<
+			setw(7) << " APR" <<
+			"Status\n";
+
+		cout << string(ACCOUNT_WIDTH + DESC_WIDTH + BALANCE_WIDTH + STATUS_WIDTH + APR_WIDTH, '-') << endl;
+	}
+}
+
+void BankCustomer::displayAccountInfo(CheckingAccount* acct)
+{
+	if (acct != nullptr)
+	{
+		cout << setw(ACCOUNT_WIDTH) << left << acct->getAccountNumber(this->getAccountNum());
+		cout << setw(DESC_WIDTH) << left << acct->getDescription();
+		cout << "$" << setw(BALANCE_WIDTH) << left << fixed << setprecision(2) << acct->getBalance();
+		cout << left << fixed << setprecision(2) << acct->getAnnualInterestRate() << endl;
+	}
+}
+
+void BankCustomer::displayAccountInfo(SavingAccount* acct)
+{
+	if (acct != nullptr)
+	{
+		cout << setw(ACCOUNT_WIDTH) << left << acct->getAccountNumber(this->getAccountNum());
+		cout << setw(DESC_WIDTH) << left << acct->getDescription();
+		cout << "$" << setw(BALANCE_WIDTH) << left << fixed << setprecision(2) << acct->getBalance();
+		cout << setw(APR_WIDTH) << left << fixed << setprecision(2) << acct->getAnnualInterestRate();
+		cout << setw(STATUS_WIDTH) << left << acct->getStatusCode() << endl;
+	}
+}
+
+void BankCustomer::displayAccountInfo(int suffix)
+{
+	AccountType accountType = BankAccount::identifyAccountType(suffix);
+	if (accountType == AccountType::Invalid)
+	{
+		cout << "Invalid account type\n";
+		return;
+	}
+
+	displayAccountHeader(accountType);
+	if (accountType==AccountType::Savings)
+	{
+		SavingAccount* saving = (SavingAccount*)getAccount(suffix);
+		displayAccountInfo(saving);
+	}
+	else if (accountType == AccountType::Checkings)
+	{
+		CheckingAccount* checking = (CheckingAccount*)getAccount(suffix);
+		displayAccountInfo(checking);
+	}
 }

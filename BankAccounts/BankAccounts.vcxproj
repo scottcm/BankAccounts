@@ -151,12 +151,14 @@
     <ClCompile Include="BankAccounts.cpp" />
     <ClCompile Include="BankCustomer.cpp" />
     <ClCompile Include="CheckingAccount.cpp" />
+    <ClCompile Include="Customers.cpp" />
     <ClCompile Include="SavingAccount.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BankAccount.h" />
     <ClInclude Include="BankCustomer.h" />
     <ClInclude Include="CheckingAccount.h" />
+    <ClInclude Include="Customers.h" />
     <ClInclude Include="SavingAccount.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
