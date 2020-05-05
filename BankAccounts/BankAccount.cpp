@@ -4,7 +4,7 @@
 const double BankAccount::deposit(const double amount)
 {
 	_balance += amount;
-	_numMonthDeposits++;
+	_monthTx.addDeposit(amount);
 
 	return _balance;
 }
@@ -15,7 +15,7 @@ const double BankAccount::deposit(const double amount)
 const double BankAccount::withdrawal(const double amount)
 {
 	_balance -= amount;
-	_numMonthWithdrawals++;
+	_monthTx.addWithdrawal(amount);
 
 	return getBalance();
 }
@@ -23,9 +23,9 @@ const double BankAccount::withdrawal(const double amount)
 // Calculates the monthly interest and adds that amount to the balance.
 void BankAccount::calcInt()
 {
-	_monthInterestEarned = _balance * getMonthlyInterestRate();
-	_ytdInterestEarned += _monthInterestEarned;
-	_balance += _monthInterestEarned;
+	double interestEarned = _balance * getMonthlyInterestRate();
+	_balance += interestEarned;
+	_monthTx.addInterest(interestEarned);
 }
 
 // Performs the monthly account processing.
@@ -33,7 +33,8 @@ void BankAccount::calcInt()
 // and the resets the number of withdrawals, deposits, monthly service charge, and monthly interest to 0
 void BankAccount::monthlyProc()
 {
-	_balance -= _serviceCharges;
+	_balance -= _monthTx.getServiceFees();
 	calcInt();
+	_monthTx.displayStatistics(_balance);
 	resetMonthlyCounters();
 }

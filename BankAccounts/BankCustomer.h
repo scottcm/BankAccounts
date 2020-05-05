@@ -124,9 +124,11 @@ public:
 	int createSubAccount(AccountType, double, double);
 	void deleteSubAccount(int);
 	void displayCustomerInfo();
+	void displayCustomerAddr();
 	void displayCheckingsAccounts();
 	void displaySavingsAccounts();
 	virtual void displayAccountInfo(int);
+
 };
 
 #endif // !CUSTOMER_H

@@ -95,6 +95,10 @@ int BankCustomer::createSubAccount(AccountType accountType, double startingBalan
 			break;
 		}
 	}
+	else
+	{
+		suffix = 0;
+	}
 	
 	return suffix;
 }
@@ -123,9 +127,20 @@ BankAccount* BankCustomer::getAccount(int suffix)
 
 void BankCustomer::displayCustomerInfo()
 {
+	cout << "CUSTOMER INFORMATION\n";
 	cout << "Cust Name: " << this->getFullName() << endl;
 	cout << "Account #: " << this->getAccountNum() << endl;
 	cout << "Num Accounts: " << this->getNumAccounts() << endl << endl;
+}
+
+void BankCustomer::displayCustomerAddr()
+{
+	cout << "CUSTOMER ADDRESS\n";
+	cout << "Address 1: " << getAddress1() << endl;
+	cout << "Address 2: " << getAddress2() << endl;
+	cout << "City: " << getCity() << endl;
+	cout << "State: " << getState() << endl;
+	cout << "Zip: " << getZipCode() << endl << endl;
 }
 
 void BankCustomer::displaySavingsAccounts()

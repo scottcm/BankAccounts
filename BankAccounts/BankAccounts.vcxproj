@@ -147,6 +147,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AccountTransaction.cpp" />
     <ClCompile Include="BankAccount.cpp" />
     <ClCompile Include="BankAccounts.cpp" />
     <ClCompile Include="BankCustomer.cpp" />
@@ -155,6 +156,7 @@
     <ClCompile Include="SavingAccount.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AccountTransaction.h" />
     <ClInclude Include="BankAccount.h" />
     <ClInclude Include="BankCustomer.h" />
     <ClInclude Include="CheckingAccount.h" />

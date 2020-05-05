@@ -1,6 +1,5 @@
 #include "Customers.h"
 #include "BankCustomer.h"
-#include <vector>
 
 
 Customers::~Customers()
@@ -13,6 +12,9 @@ Customers::~Customers()
 		delete (cIter->second);
 	}
 }
+
+/*****************************************************************************************************/
+/*                                User Input Functions                                               */
 
 string Customers::requestUserInputString(string question, int minLength = 1, int maxLength = 255)
 {
@@ -70,7 +72,6 @@ int Customers::requestUserInput(string question, int minNumber, int maxNumber)
 		cin >> response;
 		cin.ignore();
 	} while (response < minNumber || response > maxNumber);
-	cout << endl;
 
 	return response;
 }
@@ -78,14 +79,13 @@ int Customers::requestUserInput(string question, int minNumber, int maxNumber)
 double Customers::requestUserInput(string question, double minAmount, double maxAmount)
 {
 	double response;
-	
+
 	cout << question;
 	do
 	{
 		cin >> response;
 		cin.ignore();
 	} while (response < minAmount || response > maxAmount);
-	cout << endl;
 
 	return response;
 }
@@ -118,6 +118,42 @@ int Customers::makeSelection(string prompt, const string selections[], int selec
 	return userSelection;
 }
 
+
+/*****************************************************************************************************/
+/*                                Customer Account Functions                                         */
+/*****************************************************************************************************/
+// ------------------------------- Actions On Customer Account
+void Customers::updateCustomerInfo(int customerId)
+{
+	BankCustomer* customer;
+	displayMenuHeader("Update Customer Information Screen");
+
+	customer = getCustomer(customerId);
+	if (customer == nullptr)
+	{
+		cout << "You account no longer exists!\n";
+		return;
+	}
+
+	customer->displayCustomerInfo();
+
+	if (askYesNo("Update your name?"))
+	{
+		string firstName = requestUserInputString("New First Name: ", BankCustomer::MIN_NAME_LENGTH, BankCustomer::MAX_NAME_LENGTH);
+		string lastName = requestUserInputString("New Last Name: ", BankCustomer::MIN_NAME_LENGTH, BankCustomer::MAX_NAME_LENGTH);
+
+		customer->setFirstName(firstName);
+		customer->setLastName(lastName);
+	}
+	if (askYesNo("Update your address?"))
+	{
+		updateCustomerAddress(customer);
+	}
+
+	customer->displayCustomerInfo();
+	customer->displayCustomerAddr();
+}
+
 void Customers::updateCustomerAddress(BankCustomer* customer)
 {
 	cout << "\nSet Address Info...\n";
@@ -136,27 +172,62 @@ void Customers::updateCustomerAddress(BankCustomer* customer)
 	cout << endl << endl;
 }
 
-BankCustomer* Customers::createNewCustomer()
+// Create a new customer account
+int Customers::createCustomer()
 {
+	int customerId = STARTING_CUSTOMER_ID;
 	string firstName, lastName;
 	string address1, address2;
 	string city, state, zip;
 
-	// get customer info VERIFY \n ISN'T COUNTED!!!
+
+	// Get required information to create a customer account
 	firstName = requestUserInputString("First Name: ", BankCustomer::MIN_NAME_LENGTH, BankCustomer::MAX_NAME_LENGTH);
 	lastName = requestUserInputString("Last Name: ", BankCustomer::MIN_NAME_LENGTH, BankCustomer::MAX_NAME_LENGTH);
+	cout << endl;
+	// Create account
+	BankCustomer* customer = new BankCustomer(getNextCustomerId(), firstName, lastName);
 
-	BankCustomer* customer = nullptr;
-	if (askYesNo("Proceed with save?"))
+	// Verify the creation worked
+	if (customer != nullptr)
 	{
-		// create account
-		customer = new BankCustomer(getNextCustomerId(), firstName, lastName);
 		updateCustomerAddress(customer);
+		customerId = customer->getAccountNum();
+		_customers[customerId] = customer;
+
+		// Verify the new customer is in the system
+		if (customerExists(customerId))
+		{
+			cout << "Your new account ID is " << customerId << endl;
+			customer->displayCustomerInfo();
+			customer->displayCustomerAddr();
+		}
+		else
+		{
+			cout << "There was a problem adding your account to the system!\n";
+		}
+	}
+	else
+	{
+		cout << "There was a problem creating your account.\nTry again later.\n";
 	}
 
-	return customer;
+	return customerId;
 }
 
+void Customers::deleteCustomer(int customerId)
+{
+	if (customerExists(customerId))
+	{
+		// Delete the object from heap
+		delete _customers[customerId];
+
+		// Remove the entry from the map
+		_customers.erase(customerId);
+	}
+}
+
+// -------------------------------- Customer Helper Functions
 int Customers::retrieveCustomerId()
 {
 	int accountNum;
@@ -177,6 +248,7 @@ int Customers::retrieveCustomerId()
 
 	return accountNum;
 }
+
 BankCustomer* Customers::requestCustomer(int customerId)
 {
 	BankCustomer* customer = nullptr;
@@ -203,32 +275,12 @@ BankCustomer* Customers::requestCustomer(int customerId)
 	return customer;
 }
 
-// Create a new customer account
-int Customers::createCustomer()
-{
-	int customerId = STARTING_CUSTOMER_ID;
 
-	BankCustomer* customer = createNewCustomer();
-	if (customer != nullptr)
-	{
-		customerId = customer->getAccountNum();
-		_customers[customerId] = customer;
 
-		cout << "\nYour new account ID is " << customerId << endl << endl;
-	}
+/*****************************************************************************************************/
+/*                                Bank Account Functions                                             */
 
-	return customerId;
-}
-
-void Customers::deleteCustomer(int customerId)
-{
-	if (customerExists(customerId))
-	{
-		delete _customers[customerId];
-		_customers.erase(customerId);
-	}
-}
-
+// -------------------------------- Account Action Functions
 void Customers::closeSubAccount(int customerId, AccountType accountType)
 {
 	displayMenuHeader("Close Account");
@@ -237,6 +289,7 @@ void Customers::closeSubAccount(int customerId, AccountType accountType)
 	if (customer == nullptr)
 	{
 		cout << "Your account no longer exists!\n";
+		return;
 	}
 
 	int suffix = selectSubAccount(customer, accountType);
@@ -245,40 +298,77 @@ void Customers::closeSubAccount(int customerId, AccountType accountType)
 	cout << "Deleting account: " << suffix << endl;
 	customer->displayAccountInfo(suffix);
 
+	// Verify they really want to delete the account
+	// Proceed if they do
 	if (askYesNo("Are you SURE you want to delete this account?"))
 	{
 		customer->deleteSubAccount(suffix);
+	}
+
+	// Display remaining accounts
+	cout << endl << endl;
+	if (accountType == AccountType::Savings)
+	{
+		customer->displaySavingsAccounts();
+	}
+	else if (accountType==AccountType::Checkings)
+	{
+		customer->displayCheckingsAccounts();
 	}
 }
 
 void Customers::openSubAccount(int customerId, AccountType accountType)
 {
 	displayMenuHeader("Account Creation");
+
+	// Retrieve the customer record
 	BankCustomer* customer = getCustomer(customerId);
 
+	// Verify the account still exists
 	if (customer == nullptr)
 	{
 		cout << "Your account no longer exists!\n";
 		return;
 	}
 
+	// Request new account information
 	// Limit opening balance to $100,000
-	double openingBalance = requestUserInput("Opening Balance: $", 0, 100000);
-	double apr = requestUserInput("Annual Percentage Rate: ", 0.00, 100.00);
+	double openingBalance = requestUserInput("Opening Balance: $", MIN_ACTIVE_AMOUNT, MAX_AMOUNT);
+	double apr = requestUserInput("Annual Percentage Rate: ", MIN_APR, MAX_APR);
+	
+	// Create the account
 	int suffix = customer->createSubAccount(accountType, openingBalance, apr);
-	string acctDescription = requestUserInputString("Account Description (25 chars or less): ", 0, 25);
-	BankAccount* account = customer->getAccount(suffix);
-	if (account == nullptr)
+	
+	// Verify the account was created
+	if (!customer->suffixExists(suffix))
 	{
-		cout << "There was a problem creating your account.\nTry again later.\n";
+		cout << "\n\nThere was a problem creating your account.\nTry again later.\n";
 		return;
 	}
+	
+	// Retrieve the account and finish setting it up
+	BankAccount* account = customer->getAccount(suffix);
+	
+	// Verify the account was saved to the system
+	if (account == nullptr)
+	{
+		cout << "There was a problem saving your account.\n";
+		return;
+	}
+
+	string acctDescription = requestUserInputString("Account Description (25 chars or less): ", 0, 25);
 	account->setDescription(acctDescription);
+
+	// Display the new account information
+	cout << endl << endl;
+	customer->displayAccountInfo(suffix);
 }
 
 void Customers::makeDeposit(int customerId, AccountType accountType)
 {
 	displayMenuHeader("ACCOUNT DEPOSIT");
+
+	// Retrieve customer account and verify it exists
 	BankCustomer* customer = getCustomer(customerId);
 	if (customer == nullptr)
 	{
@@ -286,12 +376,12 @@ void Customers::makeDeposit(int customerId, AccountType accountType)
 		return;
 	}
 
+	// Select from available bank accounts
 	int suffix = selectSubAccount(customer, accountType);
-	if (EXIT_RESPONSE == EXIT_RESPONSE) { return; }
+	if (suffix == EXIT_RESPONSE) { return; }
 
-	customer->displayAccountInfo(suffix);
-	cout << endl;
-	double amount = requestUserInput("Deposit Amount ($100,000 max): $", 0, 100000);
+	// Get deposit amount and make the deposit
+	double amount = requestUserInput("Deposit Amount ($100,000 max): $", MIN_AMOUNT, MAX_AMOUNT);
 	if (accountType == AccountType::Savings)
 	{
 		SavingAccount* saving = (SavingAccount*)customer->getAccount(suffix);
@@ -307,6 +397,7 @@ void Customers::makeDeposit(int customerId, AccountType accountType)
 		cout << "Unable to make deposit: unknown account type\n";
 	}
 	
+	// Display the new account balance
 	cout << endl;
 	customer->displayAccountInfo(suffix);
 }
@@ -315,6 +406,7 @@ void Customers::makeWithdrawal(int customerId, AccountType accountType)
 {
 	displayMenuHeader("ACCOUNT WITHDRAWAL");
 
+	// Retrieve customer account and verify it exists
 	BankCustomer* customer = getCustomer(customerId);
 	if (customer == nullptr)
 	{
@@ -322,58 +414,36 @@ void Customers::makeWithdrawal(int customerId, AccountType accountType)
 		return;
 	}
 
+	// Select from available bank accounts
 	int suffix = selectSubAccount(customer, accountType);
-	if (EXIT_RESPONSE == EXIT_RESPONSE) { return; }
+	if (suffix == EXIT_RESPONSE) { return; }
 
+	// Display existing balance information
 	customer->displayAccountInfo(suffix);
-	cout << endl;
-	double amount = requestUserInput("Deposit Amount ($100,000 max): $", 0, 100000);
+
+	// Get withdrawal amount and make the withdrawal
+	double amount = requestUserInput("Withdrawal Amount ($100,000 max): $", MIN_AMOUNT, MAX_AMOUNT);
 	if (accountType == AccountType::Savings)
 	{
 		SavingAccount* saving = (SavingAccount*)customer->getAccount(suffix);
-		saving->deposit(amount);
+		saving->withdrawal(amount);
 	}
 	else if (accountType == AccountType::Checkings)
 	{
 		CheckingAccount* checking = (CheckingAccount*)customer->getAccount(suffix);
-		checking->deposit(amount);
+		checking->withdrawal(amount);
 	}
 	else
 	{
 		cout << "Unable to make withdrawal: unknown account type\n";
 	}
 
-	cout << endl;
+	// Display new balance information
 	customer->displayAccountInfo(suffix);
 }
 
-void Customers::useAccount(int customerId)
-{
-	displayMenuHeader("Customer Account Menu");
 
-	AccountType acctType = selectAccountType();
-	if (acctType == AccountType::Invalid) { return; }
-
-	//SUBACCT_ACTIONS
-	switch (makeSelection("What action do you want to do?", SUBACCT_ACTIONS, SUBACCT_ACTION_SIZE))
-	{
-	case DEPOSIT:
-		makeDeposit(customerId, acctType);
-		break;
-	case WITHDRAW:
-		makeWithdrawal(customerId, acctType);
-		break;
-	case CREATE:
-		openSubAccount(customerId, acctType);
-		break;
-	case DELETE:
-		closeSubAccount(customerId, acctType);
-		break;
-	default:	// Only thing left is to exit
-		return;
-	}
-}
-
+// ------------------------------------ Account Helper Functions
 AccountType Customers::selectAccountType()
 {
 	const int savings = (static_cast<int>(AccountType::Savings) / 100) - 1;
@@ -396,6 +466,9 @@ AccountType Customers::selectAccountType()
 
 	return userResponse;
 }
+
+
+// ----------------------- Bank Account Helper Functions
 int Customers::selectSubAccount(BankCustomer* customer, AccountType accountType)
 {
 	int suffix = EXIT_RESPONSE;	// Exit code
@@ -430,81 +503,116 @@ int Customers::selectSubAccount(BankCustomer* customer, AccountType accountType)
 		cout << "Select a suffix (-1 to Exit): ";
 		cin >> suffix;
 		cin.ignore();
-		cout << endl;
-	} while (suffix != EXIT_RESPONSE && customer->suffixExists(suffix));
+	} while (suffix != EXIT_RESPONSE && !customer->suffixExists(suffix));
 
+	cout << endl;
 	return suffix;
 }
 
-void Customers::updateCustomerInfo(int customerId)
-{
-	BankCustomer* customer;
-	displayMenuHeader("Update Customer Information Screen");
 
-	customer = getCustomer(customerId);
+/*****************************************************************************************************/
+/*                                   MAINTENANCE Functions                                           */
+
+void Customers::performMonthlyMainenance(int customerId)
+{
+	displayMenuHeader("Monthly Maintenance");
+
+	// Retrieve customer account and verify it exists
+	BankCustomer* customer = getCustomer(customerId);
 	if (customer == nullptr)
 	{
-		cout << "You account no longer exists!\n";
+		cout << "Your account no longer exists!\n";
 		return;
 	}
 
-	customer->displayCustomerInfo();
-	cout << endl;
-
-	if (askYesNo("Update your name?"))
+	// Process saving accounts
+	BankAccount* account = customer->getFirstSavingAccount();
+	while (account != nullptr)
 	{
-		string firstName = requestUserInputString("New First Name: ", BankCustomer::MIN_NAME_LENGTH, BankCustomer::MAX_NAME_LENGTH);
-		string lastName = requestUserInputString("New Last Name: ", BankCustomer::MIN_NAME_LENGTH, BankCustomer::MAX_NAME_LENGTH);
-		
-		customer->setFirstName(firstName);
-		customer->setLastName(lastName);
-	}
-	if (askYesNo("Update your address?"))
-	{
-		updateCustomerAddress(customer);
+		account->monthlyProc();
+		account = customer->getNextSavingAccount(account->getAccountOffset());
 	}
 
-	customer->displayCustomerInfo();
-	cout << endl << endl;
+	// Process checking accounts
+	account = customer->getFirstCheckingAccount();
+	while (account != nullptr)
+	{
+		account->monthlyProc();
+		account = customer->getNextCheckingAccount(account->getAccountOffset());
+	}
 }
+
+
+
+/*****************************************************************************************************/
+/*                               Driver & Helper Functions                                           */
 
 void Customers::displayMenuHeader(string header)
 {
-	cout << endl << endl << "***** " << header << " *****" << endl << endl;
+	cout << endl << "***** " << header << " *****" << endl << endl;
 }
 
+// Bank Account Menu: Main Menu Option 1
+// Select from 4 Options:
+// Option 1: Deposit - Savings or Checking
+// Option 2: Withdrawal - Savings or Checking
+// Option 3: Create a NEW Bank Account - Savings or Checking
+// Option 4: Delete a Bank Account - Savings or Checking
+void Customers::selectAccountAction(int customerId)
+{
+	displayMenuHeader("Customer Account Menu");
+
+	// Request what type of bank account to work with - Savings or Checking
+	AccountType acctType = selectAccountType();
+	if (acctType == AccountType::Invalid) { return; }
+
+	// Select and perform requested action
+	switch (makeSelection("What action do you want to do?", SUBACCT_ACTIONS, SUBACCT_ACTION_SIZE))
+	{
+	case DEPOSIT:
+		makeDeposit(customerId, acctType);
+		break;
+	case WITHDRAW:
+		makeWithdrawal(customerId, acctType);
+		break;
+	case CREATE:
+		openSubAccount(customerId, acctType);
+		break;
+	case DELETE:
+		closeSubAccount(customerId, acctType);
+		break;
+	}
+}
+
+// Main Menu
+// Offer 4 options
+// Option 1: Manage Bank Accounts - Create, Delete, Deposit, Withdrawal
+// Option 2: Update Customer Record
+// Option 3: Create a NEW Customer Record
+// Option 4: Delete a Customer Record
 int Customers::selectCustomerAction(int id)
 {
 	int customerId = id;
-	cout << "\n\nCurrent Customer ID: ";
+	displayMenuHeader("Welcome to the main menu");
+	cout << "Current Customer ID: ";
 	if (customerId == STARTING_CUSTOMER_ID)
 	{
-		cout << "NONE";
+		cout << "NONE\n\n";
 	}
 	else
 	{
-		cout << customerId;
+		cout << customerId << endl << endl;
 	}
-	cout << endl << endl;
 
 	switch (makeSelection("Choose an action", ACCT_ACTIONS, ACCT_ACTION_SIZE))
 	{
 	case MANAGE_ACCT:
-		if (customerId == STARTING_CUSTOMER_ID || askYesNo("\nSelect a new customer ID?"))
-		{
-			customerId = retrieveCustomerId();
-		}
-
 		if (customerId != STARTING_CUSTOMER_ID)
 		{
-			useAccount(customerId);
+			selectAccountAction(customerId);
 		}
 		break;
-	case UPDATE_ACCT:
-		if (customerId == STARTING_CUSTOMER_ID || askYesNo("\nSelect a new customer ID?"))
-		{
-			customerId = retrieveCustomerId();
-		}
+	case UPDATE_CUST:
 		if (customerId != STARTING_CUSTOMER_ID)
 		{
 			updateCustomerInfo(customerId);
@@ -514,9 +622,20 @@ int Customers::selectCustomerAction(int id)
 		customerId = createCustomer();
 		break;
 	case DELETE:
+		if (customerId != STARTING_CUSTOMER_ID)
+		{
+			deleteCustomer(customerId);
+			customerId = STARTING_CUSTOMER_ID;	// Account was just deleted
+		}
+		break;
+	case CHANGE_ID:
 		customerId = retrieveCustomerId();
-		deleteCustomer(customerId);
-		customerId = STARTING_CUSTOMER_ID;	// Account was just deleted
+		break;
+	case MNTH_PROC:
+		if (customerId != STARTING_CUSTOMER_ID)
+		{
+			performMonthlyMainenance(customerId);
+		}
 		break;
 	case EXIT_RESPONSE:
 		customerId = EXIT_RESPONSE;
@@ -535,11 +654,11 @@ void Customers::runApplication()
 	
 	int customerId = STARTING_CUSTOMER_ID;
 	bool repeat = true;
-	displayMenuHeader("Welcome to the main menu");
 
 	while (customerId != EXIT_RESPONSE)
 	{
 		customerId = selectCustomerAction(customerId);
+		cout << endl << string(25, '*') << endl;
 	};
 
 	cout << endl << endl;
