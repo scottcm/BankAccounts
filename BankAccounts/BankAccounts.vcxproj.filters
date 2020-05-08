@@ -33,9 +33,6 @@
     <ClCompile Include="Customers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AccountTransaction.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BankAccount.h">
