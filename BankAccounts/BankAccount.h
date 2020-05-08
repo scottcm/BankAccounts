@@ -15,16 +15,14 @@ class BankAccount
 private:
 	AccountType _accountType;			// The type of account
 	double _annualInterestRate;			// annual interest rate of the account
+	double _balance;					// account balance
 	short _suffix;						// account suffix	
 	string _description;				// Account description
-	AccountTransaction _monthTx;			// Monthly account transactions
+	AccountTransaction _monthTx;		// Monthly account transactions
 
+	void calcInt();
 protected:
-	
-	double _balance;					// account balance
-
-	// Resets counters and monthly variables to 0
-	// service charges, # of deposits, # of withdrawals, and monthly interest
+	// Resets monthly transaction counters to 0
 	void resetMonthlyCounters()
 	{
 		_monthTx.startNewMonth(_balance);
@@ -37,7 +35,6 @@ protected:
 	// double amount: The amount of service charge to add
 	void addServiceCharge(double amount) { _monthTx.addFee(amount); }
 
-	virtual void calcInt();
 
 public:
 	// Default constructor

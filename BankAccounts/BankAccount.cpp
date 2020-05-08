@@ -3,8 +3,11 @@
 
 const double BankAccount::deposit(const double amount)
 {
-	_balance += amount;
-	_monthTx.addDeposit(amount);
+	if (amount > 0)
+	{
+		_balance += amount;
+		_monthTx.addDeposit(amount);
+	}
 
 	return _balance;
 }
@@ -14,8 +17,11 @@ const double BankAccount::deposit(const double amount)
 	// - double amount: The amount to withdraw
 const double BankAccount::withdrawal(const double amount)
 {
-	_balance -= amount;
-	_monthTx.addWithdrawal(amount);
+	if (amount > 0)
+	{
+		_balance -= amount;
+		_monthTx.addWithdrawal(amount);
+	}
 
 	return getBalance();
 }
