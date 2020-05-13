@@ -20,6 +20,7 @@ private:
 	string _description;				// Account description
 	AccountTransaction _monthTx;		// Monthly account transactions
 
+	// Calculates interest
 	void calcInt();
 protected:
 	// Resets monthly transaction counters to 0
@@ -33,7 +34,8 @@ protected:
 
 	// Add a service charge
 	// double amount: The amount of service charge to add
-	void addServiceCharge(double amount) { _monthTx.addFee(amount); }
+	// bool wither to apply the fee immediately. Default is false
+	void addServiceCharge(double, bool = false);
 
 
 public:
@@ -49,11 +51,11 @@ public:
 	}
 
 	// Constructor
-	BankAccount(double balance, double annualInterestRate, AccountType accountType, int accountOffset) : BankAccount()
+	BankAccount(double balance, double apr, AccountType accountType, int accountOffset) : BankAccount()
 	{
 		_balance = balance;
 		_monthTx.startNewMonth(balance);
-		_annualInterestRate = annualInterestRate;
+		_annualInterestRate = apr;
 		_accountType = accountType;
 		_suffix = static_cast<int>(_accountType) + accountOffset;
 	}
@@ -64,7 +66,7 @@ public:
 	const int getAccountOffset() const { return getAccountSuffix() - static_cast<int>(getAccountType()); }
 	const string getDescription() const { return _description; }
 	const double getBalance() const { return _balance; }
-	const double getMonthlyInterestRate() const { return (_annualInterestRate / 12); }
+	const double getMonthlyInterestRate() const { return (getAnnualInterestRate() / 12.00); }
 	const double getAnnualInterestRate() const { return _annualInterestRate; }
 	const string getAccountNumber(int customerId) const { return to_string(customerId) + ":" + to_string(_suffix); }
 	/* END OF ACCESSORS */
@@ -94,8 +96,25 @@ public:
 		return accountType;
 	}
 
+	// Converts AccountType enum value to a string
+	static string accountTypeToName(AccountType accountType)
+	{
+		switch (accountType)
+		{
+		case AccountType::Checkings: return "Checking";
+		case AccountType::Savings: return "Savings";
+		}
+
+		return "Invalid";
+	}
+
+	// Deposits the specified amount
 	virtual const double deposit(const double amount);
+
+	// Withrdaws the specified amount
 	virtual const double withdrawal(const double amount);
+
+	// Performs monthly processing
 	virtual void monthlyProc();
 };
 

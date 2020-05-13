@@ -16,7 +16,7 @@ private:
 	const int MAX_NUM_WITHDRAWAL = 4;
 
 public:
-
+	// Declare constructor
 	SavingAccount(double, double, int);
 
 	// Accessors
@@ -26,6 +26,7 @@ public:
 		return getBalance() >= MIN_ACTIVE_BAL;
 	}
 
+	// Returns the active status code for the savings account
 	const string getStatusCode() const
 	{
 		//If active return A, if inactive return I
@@ -35,7 +36,7 @@ public:
 			return INACTIVE;
 	}
 
-	//Override
+	//Overrides
 	virtual const double deposit(const double amount);
 	virtual const double withdrawal(const double amount);
 	virtual void monthlyProc();

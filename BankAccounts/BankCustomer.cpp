@@ -7,13 +7,15 @@
 
 using namespace std;
 
-BankCustomer::BankCustomer(int accountNum, string firstName, string lastName)
+// Constructor
+BankCustomer::BankCustomer(int customerNum, string firstName, string lastName)
 {
 	_firstName = firstName;
 	_lastName = lastName;
-	_accountNum = accountNum;
+	_customerNum = customerNum;
 }
 
+// Destructor - Needed to release the memory allocated for the customers bank accounts
 BankCustomer::~BankCustomer()
 {
 	map<int, BankAccount*>::iterator accts;
@@ -45,6 +47,7 @@ BankAccount* BankCustomer::findNextAccountOfType(AccountType accountType, int st
 	{
 		int suffix = static_cast<int>(accountType);
 
+		// Use a linear search for bank account because the # of accounts is small
 		for (int offset = startingOffset + 1; offset < 100; offset++)
 		{
 			if (BankCustomer::_accounts.count(suffix + offset) && BankCustomer::_accounts[suffix + offset]->getAccountType() == accountType)
@@ -64,6 +67,8 @@ const int BankCustomer::getNextSuffixOfType(AccountType accountType)
 {
 	int lastSuffix = static_cast<int>(accountType);
 
+	// Find the next account suffix using a linear search because the 
+	// list is small.
 	for (int i = 0; i < 100; i++)
 	{
 		lastSuffix += i;
@@ -77,6 +82,7 @@ const int BankCustomer::getNextSuffixOfType(AccountType accountType)
 	return 0;
 }
 
+// Create the customers bank account
 int BankCustomer::createSubAccount(AccountType accountType, double startingBalance, double annualInterestRate)
 {
 	int suffix = BankCustomer::getNextSuffixOfType(accountType);
@@ -103,6 +109,7 @@ int BankCustomer::createSubAccount(AccountType accountType, double startingBalan
 	return suffix;
 }
 
+// Delete the specified account
 void BankCustomer::deleteSubAccount(int suffix)
 {
 	if (_accounts.count(suffix))
@@ -125,6 +132,7 @@ BankAccount* BankCustomer::getAccount(int suffix)
 	return account;
 }
 
+// Display the customer's information
 void BankCustomer::displayCustomerInfo()
 {
 	cout << "CUSTOMER INFORMATION\n";
@@ -133,6 +141,7 @@ void BankCustomer::displayCustomerInfo()
 	cout << "Num Accounts: " << this->getNumAccounts() << endl << endl;
 }
 
+// Display the customer's address
 void BankCustomer::displayCustomerAddr()
 {
 	cout << "CUSTOMER ADDRESS\n";
@@ -143,6 +152,7 @@ void BankCustomer::displayCustomerAddr()
 	cout << "Zip: " << getZipCode() << endl << endl;
 }
 
+// Display all the customer's savings accounts
 void BankCustomer::displaySavingsAccounts()
 {
 	SavingAccount* acct = this->getFirstSavingAccount();
@@ -169,6 +179,7 @@ void BankCustomer::displaySavingsAccounts()
 	cout << endl << endl;
 }
 
+// Display all the customer's checking accounts
 void BankCustomer::displayCheckingsAccounts()
 {
 	CheckingAccount* acct = getFirstCheckingAccount();
@@ -196,6 +207,7 @@ void BankCustomer::displayCheckingsAccounts()
 	cout << endl << endl;
 }
 
+// Display a header for account data
 void BankCustomer::displayAccountHeader(AccountType accountType)
 {
 	if (accountType == AccountType::Checkings)
@@ -218,6 +230,7 @@ void BankCustomer::displayAccountHeader(AccountType accountType)
 	}
 }
 
+// Display checking account data
 void BankCustomer::displayAccountInfo(CheckingAccount* acct)
 {
 	if (acct != nullptr)
@@ -229,6 +242,7 @@ void BankCustomer::displayAccountInfo(CheckingAccount* acct)
 	}
 }
 
+// Display saving account data
 void BankCustomer::displayAccountInfo(SavingAccount* acct)
 {
 	if (acct != nullptr)
@@ -241,6 +255,7 @@ void BankCustomer::displayAccountInfo(SavingAccount* acct)
 	}
 }
 
+// Display bank account data for the specified suffix
 void BankCustomer::displayAccountInfo(int suffix)
 {
 	AccountType accountType = BankAccount::identifyAccountType(suffix);
@@ -250,7 +265,10 @@ void BankCustomer::displayAccountInfo(int suffix)
 		return;
 	}
 
+	cout << endl << endl;
 	displayAccountHeader(accountType);
+
+	// Display the account data
 	if (accountType==AccountType::Savings)
 	{
 		SavingAccount* saving = (SavingAccount*)getAccount(suffix);

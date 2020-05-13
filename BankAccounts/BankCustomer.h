@@ -15,18 +15,21 @@ using namespace std;
 class BankCustomer
 {
 private:
+	// Magic # Constants
 	const int ACCOUNT_WIDTH = 12;
 	const int STATUS_WIDTH = 7;
 	const int BALANCE_WIDTH = 10;
 	const int DESC_WIDTH = 20;
 	const int APR_WIDTH = 7;
 
-	int _accountNum;
-	map<int, BankAccount*> _accounts;
-	string _firstName, _lastName;	// First and last name of customer
-	string _address1, _address2;
-	string _city, _state, _zipCode;
+	// Global variables
+	int _customerNum;					// The customer number
+	map<int, BankAccount*> _accounts;	// Holds the customers bank accounts
+	string _firstName, _lastName;		// First and last name of customer
+	string _address1, _address2;		// Address1 & 2 fields
+	string _city, _state, _zipCode;		// Remaining address fields
 
+	// Functions
 	const int getNextSuffixOfType(AccountType accountType);
 	BankAccount* findAccount(int suffix);
 
@@ -36,6 +39,7 @@ protected:
 	void displayAccountHeader(AccountType);
 
 public:
+	// Constants needed to properly input banking records
 	const static int MIN_NAME_LENGTH = 2;
 	const static int MIN_ADDR_LENGTH = 5;
 	const static int MIN_CITY_LENGTH = 2;
@@ -51,7 +55,7 @@ public:
 	~BankCustomer();
 
 	/* Accessors */
-	const int getAccountNum() const { return _accountNum; }
+	const int getAccountNum() const { return _customerNum; }
 	const string getFullName() const { return _firstName + " " + _lastName; }
 	const string getFirstName() const { return _firstName; }
 	const string getLastName() const { return _lastName; }
@@ -70,16 +74,15 @@ public:
 	}
 	const bool suffixExists(int suffix) const { return _accounts.count(suffix); }
 	const unsigned int getNumAccounts() { return _accounts.size(); }
+	
 
-	BankAccount* findNextAccountOfType(AccountType accountType, int startingOffset);
-
+	/**************************** Bank Account Access Functions *************************/
 	// Returns the first savings account if one exists, otherwise nullptr
 	SavingAccount* getFirstSavingAccount()
 	{
 		BankAccount* account = BankCustomer::findNextAccountOfType(AccountType::Savings, -1);
 		return (SavingAccount*)account;
 	}
-
 	// Returns the next savings account after the offset
 	// int currOffset: The offset from AccountType::Savings
 	SavingAccount* getNextSavingAccount(int currOffset)
@@ -94,6 +97,7 @@ public:
 		BankAccount* account = BankCustomer::findNextAccountOfType(AccountType::Checkings, -1);
 		return (CheckingAccount*)account;
 	}
+	BankAccount* findNextAccountOfType(AccountType accountType, int startingOffset);
 
 	// Returns the next checking account after the offset
 	// int currOffset: The offset from AccountType::Checkings
